@@ -1,27 +1,20 @@
-"use client";
-import React from "react";
-import { useParams } from "next/navigation";
 import ArticlesTabs from "./components/ArticlesTabs";
-import { useTopics } from "@/hooks/useTopics";
-import LoadingCard from "@/app/components/LoadingCard";
-import ErrorState from "@/app/components/ErrorState";
 import { getDictionary } from "@/lib/getDictionary";
+import { getTopicsApi } from "@/services/topicsService";
 
-
-export default function ArticlesPage() {
-  const { locale = "ar" } = useParams();
+export default async function ArticlesPage({ params }) {
+  const { locale = "ar" } = await params;
 
   const dict = getDictionary(locale);
 
-  const { data, isLoading, error } = useTopics(locale);
-  const categories = data?.categories || [];
+  let categories = [];
 
-  if (isLoading) return <LoadingCard />;
-  if (error) return <ErrorState />;
-
-
-  
-
+  try {
+    const data = await getTopicsApi(locale);
+    categories = data?.categories || [];
+  } catch (error) {
+    console.error("Failed to load articles:", error);
+  }
 
   return (
     <section className="container py-[200px]">

@@ -28,7 +28,7 @@ export default function ArticleDetails({
       .replace(/^-|-$/g, "");
   };
 
-  const articleSlug = `${article?.id}-${createSlug(article?.title)}`;
+  const articleSlug = String(article?.id);
 
   return (
     <motion.div

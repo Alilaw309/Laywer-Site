@@ -14,7 +14,7 @@ export default function ArticleDetailsPage() {
   const dict = getDictionary(locale);
 
   const topicId = Array.isArray(id) ? id[0]?.split("-")[0] : id?.split("-")[0];
-const { data, isLoading, error, refetch } = useTopicDetails(topicId);
+const { data, isLoading, error, refetch } = useTopicDetails(topicId, locale);
   if (isLoading) return <LoadingCard />;
   if (error) return <ErrorState onRetry={refetch} />;
 

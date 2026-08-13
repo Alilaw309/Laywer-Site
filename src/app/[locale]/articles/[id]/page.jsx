@@ -18,7 +18,7 @@ const { data, isLoading, error, refetch } = useTopicDetails(topicId, locale);
   if (isLoading) return <LoadingCard />;
   if (error) return <ErrorState onRetry={refetch} />;
 
-  const article = data?.topic;
+const article = data?.topic || data;
   const relatedArticles = data?.related_topics || [];
   const isArabic = locale === "ar";
 

@@ -19,9 +19,7 @@ export default function ArticlesTabs({ categories = [], locale }) {
 
   const filteredArticles =
     activeTab === "all"
-      ? articles
-      : articles.filter((article) => article.category?.id === activeTab);
-
+      ? articles: articles.filter((article) => String(article.category?.id) === String(activeTab));
   return (
     <section className="mt-[50px] pb-28">
       <div className="container">
@@ -42,12 +40,12 @@ export default function ArticlesTabs({ categories = [], locale }) {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab?.id || "")}
-              className={`rounded-full border px-6 py-3 text-custom14 font-[600] transition ${
-                activeTab === tab?.id || ""
-                  ? "border-secondary bg-secondary text-white"
-                  : "border-[#263B58] bg-transparent text-white hover:border-secondary hover:text-secondary"
-              }`}
+              onClick={() => setActiveTab(String(tab?.id || ""))}
+                  className={`rounded-full border px-6 py-3 text-custom14 font-[600] transition ${
+  activeTab === String(tab?.id || "")
+    ? "border-secondary bg-secondary text-white"
+    : "border-[#263B58] bg-transparent text-white hover:border-secondary hover:text-secondary"
+}`}
             >
               {tab?.title}
             </button>

@@ -2,43 +2,33 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import MoreArticles from "../components/MoreArticles";
-import LoadingCard from "@/app/components/LoadingCard";
-import ErrorState from "@/app/components/ErrorState";
-import { useTopicDetails } from "@/hooks/useTopicsDetails";
 import { getDictionary } from "@/lib/getDictionary";
 
-export default function ArticleDetailsPage() {
-  const { locale = "ar", id } = useParams();
+export default function ArticleDetailsClient({
+  initialArticle,
+  relatedArticles = [],
+  locale = "ar",
+}) {
   const dict = getDictionary(locale);
-
-  const topicId = Array.isArray(id) ? id[0]?.split("-")[0] : id?.split("-")[0];
-const { data, isLoading, error, refetch } = useTopicDetails(topicId, locale);
-  if (isLoading) return <LoadingCard />;
-  if (error) return <ErrorState onRetry={refetch} />;
-
-const article = data?.topic || data;
-  const relatedArticles = data?.related_topics || [];
-  const isArabic = locale === "ar";
+  const article = initialArticle;
 
   if (!article) {
     return (
       <section className="bg-primary py-[200px] text-center text-white">
-        المقال غير متوفر 
+        المقال غير متوفر
       </section>
     );
   }
-
-  console.log("IMAGE DEBUG:", article?.image);
 
   return (
     <main className="bg-primary">
       <section className="container py-[160px]">
         <div className="grid grid-cols-12 gap-2">
+
           <div className="col-span-12 text-center">
             <span className="mb-2 inline-block px-6 py-3 text-custom14 font-[700] text-secondary">
-              {article.category?.title}
+              {article?.category?.title}
             </span>
 
             <h1 className="mx-auto w-full text-custom32 font-[700] leading-relaxed text-white">
@@ -72,32 +62,40 @@ const article = data?.topic || data;
                 [&_h2]:mb-5 [&_h2]:mt-8 [&_h2]:text-custom24 [&_h2]:font-bold [&_h2]:text-white
                 [&_p]:mb-6 [&_p]:leading-9
               `}
-              dangerouslySetInnerHTML={{ __html: article?.content || "" }}
+              dangerouslySetInnerHTML={{
+                __html: article?.content || "",
+              }}
             />
           </article>
 
           <aside className="col-span-12 lg:col-span-3">
             <div className="sticky top-[120px] rounded-[14px] bg-secondary p-6 text-center">
               <h3 className="mb-2 text-custom18 font-bold text-white">
-               {dict?.articles?.needConsultation}
+                {dict?.articles?.needConsultation}
               </h3>
 
               <p className="mb-2 text-custom14 leading-6 text-white/80">
-                {dict?.articles?.canConsulationNow}  
+                {dict?.articles?.canConsulationNow}
               </p>
 
               <Link
                 href={`/${locale}#contact`}
                 className="inline-flex rounded-full bg-primary px-5 py-2 text-custom14 font-bold text-white transition-all duration-300 hover:bg-primary/80"
               >
-               {dict?.header?.book}
+                {dict?.header?.book}
               </Link>
             </div>
           </aside>
 
-          <div className="col-span-12">
-            <MoreArticles locale={locale} articles={relatedArticles} />
-          </div>
+          {relatedArticles.length > 0 && (
+            <div className="col-span-12">
+              <MoreArticles
+                locale={locale}
+                articles={relatedArticles}
+              />
+            </div>
+          )}
+
         </div>
       </section>
     </main>

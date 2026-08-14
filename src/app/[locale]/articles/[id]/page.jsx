@@ -1,105 +1,60 @@
-"use client";
+import ArticleDetailsClient from "./ArticleDetailsClient";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import MoreArticles from "../components/MoreArticles";
-import LoadingCard from "@/app/components/LoadingCard";
-import ErrorState from "@/app/components/ErrorState";
-import { useTopicDetails } from "@/hooks/useTopicsDetails";
-import { getDictionary } from "@/lib/getDictionary";
+const API_URL = "https://admin.alilaw.ae/api/v1";
 
-export default function ArticleDetailsPage() {
-  const { locale = "ar", id } = useParams();
-  const dict = getDictionary(locale);
+async function getArticle(id, locale) {
+  try {
+    const topicId = id?.split("-")[0];
 
-  const topicId = Array.isArray(id) ? id[0]?.split("-")[0] : id?.split("-")[0];
-const { data, isLoading, error, refetch } = useTopicDetails(topicId, locale);
-  if (isLoading) return <LoadingCard />;
-  if (error) return <ErrorState onRetry={refetch} />;
+    const response = await fetch(`${API_URL}/topics/${topicId}`, {
+      headers: {
+        lang: locale,
+        Accept: "application/json",
+      },
+      next: { revalidate: 3600 },
+    });
 
-const article = data?.topic || data;
-  const relatedArticles = data?.related_topics || [];
-  const isArabic = locale === "ar";
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data?.topic || data?.data || data;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }) {
+  const { locale, id } = await params;
+  const article = await getArticle(id, locale);
 
   if (!article) {
-    return (
-      <section className="bg-primary py-[200px] text-center text-white">
-        المقال غير متوفر 
-      </section>
-    );
+    return {
+      title: "المقالات القانونية | علي سعيد الشامسي",
+    };
   }
 
-  console.log("IMAGE DEBUG:", article?.image);
+  const title = article.title;
+  const description =
+    article.meta_description ||
+    article.description ||
+    article.content?.replace(/<[^>]*>/g, "").slice(0, 160);
 
-  return (
-    <main className="bg-primary">
-      <section className="container py-[160px]">
-        <div className="grid grid-cols-12 gap-2">
-          <div className="col-span-12 text-center">
-            <span className="mb-2 inline-block px-6 py-3 text-custom14 font-[700] text-secondary">
-              {article.category?.title}
-            </span>
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `https://alilaw.ae/${locale}/articles/${id}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://alilaw.ae/${locale}/articles/${id}`,
+      type: "article",
+      images: article.image ? [article.image] : [],
+    },
+  };
+}
 
-            <h1 className="mx-auto w-full text-custom32 font-[700] leading-relaxed text-white">
-              {article?.title}
-            </h1>
-          </div>
-
-          <div className="col-span-12">
-            <div className="relative my-[10px] overflow-hidden rounded-[24px]">
-              <div className="relative mx-auto my-10 h-[300px] w-full overflow-hidden rounded-[28px] sm:h-[350px] lg:h-[500px] lg:w-[90%]">
-                <Image
-                  src={article?.image || "/images/icon-1.png"}
-                  alt={article?.title || "article"}
-                  fill
-                  priority
-                  className="object-fill object-center"
-                />
-              </div>
-            </div>
-          </div>
-
-          <article className="col-span-12 text-start lg:col-span-9">
-            <h2 className="mb-2 text-custom20 font-bold leading-relaxed text-white md:text-custom36">
-              {article?.title}
-            </h2>
-
-            <div
-              className={`
-                article-content w-full lg:w-[80%]
-                text-custom16 leading-9 text-[#95AAC7]
-                [&_h2]:mb-5 [&_h2]:mt-8 [&_h2]:text-custom24 [&_h2]:font-bold [&_h2]:text-white
-                [&_p]:mb-6 [&_p]:leading-9
-              `}
-              dangerouslySetInnerHTML={{ __html: article?.content || "" }}
-            />
-          </article>
-
-          <aside className="col-span-12 lg:col-span-3">
-            <div className="sticky top-[120px] rounded-[14px] bg-secondary p-6 text-center">
-              <h3 className="mb-2 text-custom18 font-bold text-white">
-               {dict?.articles?.needConsultation}
-              </h3>
-
-              <p className="mb-2 text-custom14 leading-6 text-white/80">
-                {dict?.articles?.canConsulationNow}  
-              </p>
-
-              <Link
-                href={`/${locale}#contact`}
-                className="inline-flex rounded-full bg-primary px-5 py-2 text-custom14 font-bold text-white transition-all duration-300 hover:bg-primary/80"
-              >
-               {dict?.header?.book}
-              </Link>
-            </div>
-          </aside>
-
-          <div className="col-span-12">
-            <MoreArticles locale={locale} articles={relatedArticles} />
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+export default function Page() {
+  return <ArticleDetailsClient />;
 }

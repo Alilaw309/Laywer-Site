@@ -1,7 +1,6 @@
-import { getTopicsApi } from "@/services/topicsService";
-
 export default async function sitemap() {
   const baseUrl = "https://alilaw.ae";
+  const apiUrl = "https://admin.alilaw.ae/api/v1";
   const locales = ["ar", "en"];
 
   const staticPages = [
@@ -18,32 +17,47 @@ export default async function sitemap() {
       url: `${baseUrl}/${locale}${page}`,
       lastModified: new Date(),
       changeFrequency: "weekly",
-      priority: page === "" ? 1.0 : 0.8,
+      priority: page === "" ? 1 : 0.8,
     }))
   );
 
-  let articleUrls = [];
+  const articleUrls = [];
 
-  try {
-    for (const locale of locales) {
-      const response = await getTopicsApi(locale);
-      const articles = Array.isArray(response)
-        ? response
-        : response?.data || [];
+  for (const locale of locales) {
+    try {
+      const response = await fetch(`${apiUrl}/topics`, {
+        headers: {
+          lang: locale,
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
 
-      const urls = articles.map((article) => ({
-        url: `${baseUrl}/${locale}/articles/${article.id}`,
-        lastModified: new Date(
-          article.updated_at || article.created_at || Date.now()
-        ),
-        changeFrequency: "weekly",
-        priority: 0.7,
-      }));
+      if (!response.ok) continue;
 
-      articleUrls.push(...urls);
+      const data = await response.json();
+
+      const articles = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
+
+      for (const article of articles) {
+        if (!article?.id) continue;
+
+        articleUrls.push({
+          url: `${baseUrl}/${locale}/articles/${article.id}`,
+          lastModified: article.updated_at
+            ? new Date(article.updated_at)
+            : new Date(),
+          changeFrequency: "weekly",
+          priority: 0.7,
+        });
+      }
+    } catch (error) {
+      console.error(`Sitemap error for ${locale}:`, error);
     }
-  } catch (error) {
-    console.error("Sitemap articles error:", error);
   }
 
   return [...staticUrls, ...articleUrls];

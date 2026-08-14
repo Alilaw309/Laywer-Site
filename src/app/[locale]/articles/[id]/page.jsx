@@ -114,11 +114,59 @@ export default async function Page({ params }) {
   const { locale = "ar", id } = await params;
   const article = await getArticle(id, locale);
 
+  const canonical = `${SITE_URL}/${locale}/articles/${id}`;
+
+  const articleSchema = article
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: article.title,
+        description:
+          article.meta_description ||
+          article.description ||
+          stripHtml(article.content).slice(0, 160),
+        image: article.image ? [article.image] : undefined,
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": canonical,
+        },
+        author: {
+          "@type": "Person",
+          name:
+            locale === "ar"
+              ? "علي سعيد الشامسي"
+              : "Ali Saeed Al Shamsi",
+          url: SITE_URL,
+        },
+        publisher: {
+          "@type": "Person",
+          name:
+            locale === "ar"
+              ? "علي سعيد الشامسي"
+              : "Ali Saeed Al Shamsi",
+          url: SITE_URL,
+        },
+        inLanguage: locale === "ar" ? "ar-AE" : "en-AE",
+        url: canonical,
+      }
+    : null;
+
   return (
-    <ArticleDetailsClient
-      initialArticle={article}
-      locale={locale}
-      id={id}
-    />
+    <>
+      {articleSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
+
+      <ArticleDetailsClient
+        initialArticle={article}
+        locale={locale}
+        id={id}
+      />
+    </>
   );
 }

@@ -38,10 +38,12 @@ export default async function sitemap() {
       const data = await response.json();
 
       const articles = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
+  ? data
+  : Array.isArray(data?.data)
+  ? data.data
+  : Array.isArray(data?.topics)
+  ? data.topics
+  : [];
 
       for (const article of articles) {
         if (!article?.id) continue;

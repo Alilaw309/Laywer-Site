@@ -1,6 +1,7 @@
 import ArticleDetailsClient from "./ArticleDetailsClient";
 
 const API_URL = "https://admin.alilaw.ae/api/v1";
+const SITE_URL = "https://alilaw.ae";
 
 async function getArticle(id, locale) {
   try {
@@ -23,38 +24,101 @@ async function getArticle(id, locale) {
   }
 }
 
+function stripHtml(html = "") {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function generateMetadata({ params }) {
-  const { locale, id } = await params;
+  const { locale = "ar", id } = await params;
   const article = await getArticle(id, locale);
 
   if (!article) {
     return {
-      title: "المقالات القانونية | علي سعيد الشامسي",
+      title:
+        locale === "ar"
+          ? "المقالات القانونية | علي سعيد الشامسي"
+          : "Legal Articles | Ali Saeed Al Shamsi",
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
 
-  const title = article.title;
-  const description =
+  const canonical = `${SITE_URL}/${locale}/articles/${id}`;
+
+  const rawDescription =
     article.meta_description ||
     article.description ||
-    article.content?.replace(/<[^>]*>/g, "").slice(0, 160);
+    stripHtml(article.content);
+
+  const description =
+    rawDescription?.slice(0, 160) ||
+    (locale === "ar"
+      ? "مقالات ومعلومات قانونية وفق تشريعات دولة الإمارات العربية المتحدة."
+      : "Legal articles and information based on the laws of the United Arab Emirates.");
+
+  const title =
+    locale === "ar"
+      ? `${article.title} | علي سعيد الشامسي`
+      : `${article.title} | Ali Saeed Al Shamsi`;
 
   return {
     title,
     description,
+
     alternates: {
-      canonical: `https://alilaw.ae/${locale}/articles/${id}`,
+      canonical,
     },
+
     openGraph: {
       title,
       description,
-      url: `https://alilaw.ae/${locale}/articles/${id}`,
+      url: canonical,
+      siteName:
+        locale === "ar" ? "علي سعيد الشامسي" : "Ali Saeed Al Shamsi",
       type: "article",
+      locale: locale === "ar" ? "ar_AE" : "en_AE",
+      images: article.image
+        ? [
+            {
+              url: article.image,
+              alt: article.title,
+            },
+          ]
+        : [],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: article.image ? [article.image] : [],
+    },
+
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
     },
   };
 }
 
-export default function Page() {
-  return <ArticleDetailsClient />;
+export default async function Page({ params }) {
+  const { locale = "ar", id } = await params;
+  const article = await getArticle(id, locale);
+
+  return (
+    <ArticleDetailsClient
+      initialArticle={article}
+      locale={locale}
+      id={id}
+    />
+  );
 }

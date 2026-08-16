@@ -218,6 +218,20 @@ export default function Footer({ locale }) {
             isArabic ? "right-8" : "left-8"
           }`}
         >
+         <a
+  href="tel:+971503466632"
+  aria-label="اتصال مباشر"
+  className="
+    flex h-16 w-16 items-center justify-center
+    rounded-full bg-secondary
+    text-white text-[30px]
+    shadow-[0_10px_30px_rgba(186,134,50,0.45)]
+    transition-all duration-300
+    hover:scale-110
+  "
+>
+  ☎
+</a> 
           <button
             type="button"
             onClick={() => setOpen(true)}
